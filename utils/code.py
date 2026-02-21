@@ -1,0 +1,19 @@
+class ResponseCode:
+    # Success
+    SUCCESS = 200
+    CREATED = 201
+    ACCEPTED = 202
+
+    # Client Error
+    BAD_REQUEST = 400
+    UNAUTHORIZED = 401
+    FORBIDDEN = 403
+    NOT_FOUND = 404
+    METHOD_NOT_ALLOWED = 405
+    CONFLICT = 409
+    VALIDATION_ERROR = 422
+
+    # Server Error
+    SERVER_ERROR = 500
+    BAD_GATEWAY = 502
+    SERVICE_UNAVAILABLE = 503
