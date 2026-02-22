@@ -1,59 +1,44 @@
-# tasks/api_utils.py
-from __future__ import annotations
-
+from .code import ResponseCode
 from typing import Any, Optional
-from utils.code import ResponseCode
 from django.http import JsonResponse
 
 
 
-def response_success(data: Any = None, *, message: str = "OK", status: int = ResponseCode.SUCCESS) -> JsonResponse:
+def response_success(data: Any = None,code: int = ResponseCode.SUCCESS,) -> JsonResponse:
     """
-    Unified success response envelope.
+    Unified success response.
 
     Example:
     {
-      "success": true,
-      "data": {...},
-      "error": null,
-      "message": "OK"
-      "status": 200
+        "success": true,
+        "code": 0,
+        "data": {...},
     }
     """
     return JsonResponse(
-        {"success": True, "data": data, "error": None, "message": message, "status": status},
-        status=status,
-        json_dumps_params={"ensure_ascii": False},
+        {
+            "success": True,
+            "code": code,
+            "data": data,
+        }
     )
 
 
-def response_fail(
-    code: str,
-    message: str,
-    *,
-    status: int = ResponseCode.BAD_REQUEST,
-    details: Optional[Any] = None,
-) -> JsonResponse:
+def response_fail(message: str=None, code: int=ResponseCode.BAD_REQUEST) -> JsonResponse:
     """
-    Unified error response envelope.
+    Unified error response.
 
     Example:
     {
-      "success": false,
-      "data": null,
-      "error": {"code": "VALIDATION_ERROR", "message": "...", "details": {...}},
-      "message": "..."
-      "status": 400
+        "success": false,
+        "code": 1001,
+        "message": "Validation error",
     }
     """
     return JsonResponse(
         {
             "success": False,
-            "data": None,
-            "error": {"code": code, "message": message, "details": details},
+            "code": code,          # 业务错误码，例如 1001
             "message": message,
-            "status": status,
-        },
-        status=status,
-        json_dumps_params={"ensure_ascii": False},
+        }
     )

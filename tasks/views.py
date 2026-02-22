@@ -13,7 +13,6 @@ def hello(request):
     }
     return response_success(
         data=data,
-        message = "Hello, Django backend is working!",
     )
 
 @csrf_exempt
@@ -22,12 +21,12 @@ def add_task(request):
 
     try:
         body = json.loads(request.body)
-    except json.JSONDecodeError:
-        return response_fail(status=ResponseCode.PARAMETER_ERROR)
+    except json.JSONDecodeError as e:
+        return response_fail(e)
 
     title = body.get("title", "").strip()
     task = Task.objects.create(title=title)
-    return response_success({"id": task.id, "title": task.title}, status=ResponseCode.SUCCESS)
+    return response_success({"id": task.id, "title": task.title})
 
 
 @csrf_exempt
@@ -41,8 +40,8 @@ def task_detail(request, task_id):
 
     try:
         task = Task.objects.get(id=task_id)
-    except Task.DoesNotExist:
-        return response_fail(status=ResponseCode.NOT_FOUND)
+    except Task.DoesNotExist as e:
+        return response_fail(e)
 
     if request.method == "GET":
         return response_success({"id": task.id, "title": task.title})
@@ -50,8 +49,8 @@ def task_detail(request, task_id):
     if request.method == "PUT":
         try:
             body = json.loads(request.body)
-        except json.JSONDecodeError:
-            return response_fail(status=ResponseCode.PARAMETER_ERROR)
+        except json.JSONDecodeError as e:
+            return response_fail(e.msg)
 
         title = body.get("title", "").strip()
         task.title = title
