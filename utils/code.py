@@ -12,6 +12,7 @@ class ResponseCode:
     METHOD_NOT_ALLOWED = 405
     CONFLICT = 409
     VALIDATION_ERROR = 422
+    PARAMETER_ERROR = 423
 
     # Server Error
     SERVER_ERROR = 500
