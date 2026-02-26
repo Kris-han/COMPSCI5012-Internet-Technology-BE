@@ -1,0 +1,101 @@
+<html>
+<head>
+<title>1.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #5f826b; font-style: italic;}
+.s5 { color: #2aacb8;}
+.s6 { color: #6aab73;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+1.py</font>
+</center></td></tr></table>
+<pre><span class="s0">from </span><span class="s1">django</span><span class="s2">.</span><span class="s1">db </span><span class="s0">import </span><span class="s1">models</span>
+<span class="s0">from </span><span class="s1">django</span><span class="s2">.</span><span class="s1">contrib</span><span class="s2">.</span><span class="s1">auth</span><span class="s2">.</span><span class="s1">models </span><span class="s0">import </span><span class="s1">AbstractUser</span>
+<span class="s0">from </span><span class="s1">django</span><span class="s2">.</span><span class="s1">utils </span><span class="s0">import </span><span class="s1">timezone</span>
+<span class="s0">import </span><span class="s1">uuid</span>
+<span class="s3"># 扩展Django内置用户模型</span>
+<span class="s0">class </span><span class="s1">User</span><span class="s2">(</span><span class="s1">AbstractUser</span><span class="s2">):</span>
+    <span class="s4">&quot;&quot;&quot; 
+    继承Django AbstractUser扩展用户模型，用于登录注册 
+    新增：手机号、头像、用户唯一标识、注册时间等扩展字段 
+    &quot;&quot;&quot;</span>
+    <span class="s3"># 新增核心扩展字段</span>
+    <span class="s1">phone </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">CharField</span><span class="s2">(</span>
+        <span class="s1">max_length</span><span class="s2">=</span><span class="s5">11</span><span class="s2">,</span>
+        <span class="s1">blank</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">null</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">unique</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;手机号&quot;</span>
+    <span class="s2">)  </span><span class="s3"># 手机号唯一，支持用手机号登录</span>
+    <span class="s1">avatar </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">ImageField</span><span class="s2">(</span>
+        <span class="s1">upload_to</span><span class="s2">=</span><span class="s6">&quot;avatars/%Y/%m/%d/&quot;</span><span class="s2">,</span>
+        <span class="s1">blank</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">null</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;用户头像&quot;</span>
+    <span class="s2">)  </span><span class="s3"># 头像上传路径按日期分目录</span>
+    <span class="s1">user_uuid </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">UUIDField</span><span class="s2">(</span>
+        <span class="s1">default</span><span class="s2">=</span><span class="s1">uuid</span><span class="s2">.</span><span class="s1">uuid4</span><span class="s2">,</span>
+        <span class="s1">editable</span><span class="s2">=</span><span class="s0">False</span><span class="s2">,</span>
+        <span class="s1">unique</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;用户唯一标识&quot;</span>
+    <span class="s2">)  </span><span class="s3"># 唯一UUID，避免用自增ID暴露用户数量</span>
+    <span class="s1">register_time </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">DateTimeField</span><span class="s2">(</span>
+        <span class="s1">default</span><span class="s2">=</span><span class="s1">timezone</span><span class="s2">.</span><span class="s1">now</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;注册时间&quot;</span>
+    <span class="s2">)  </span><span class="s3"># 注册时间，默认当前时间</span>
+    <span class="s1">last_login_ip </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">CharField</span><span class="s2">(</span>
+        <span class="s1">max_length</span><span class="s2">=</span><span class="s5">50</span><span class="s2">,</span>
+        <span class="s1">blank</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">null</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;最后登录IP&quot;</span>
+    <span class="s2">)  </span><span class="s3"># 记录最后登录IP，可选</span>
+
+    <span class="s3"># 元数据配置</span>
+    <span class="s0">class </span><span class="s1">Meta</span><span class="s2">:</span>
+        <span class="s1">db_table </span><span class="s2">= </span><span class="s6">&quot;user&quot;  </span><span class="s3"># 数据库表名，简洁易识别</span>
+        <span class="s1">verbose_name </span><span class="s2">= </span><span class="s6">&quot;用户&quot;</span>
+        <span class="s1">verbose_name_plural </span><span class="s2">= </span><span class="s6">&quot;用户&quot;  </span><span class="s3"># 后台显示复数名称</span>
+        <span class="s1">ordering </span><span class="s2">= [</span><span class="s6">&quot;-register_time&quot;</span><span class="s2">]  </span><span class="s3"># 默认按注册时间倒序排列</span>
+
+    <span class="s0">def </span><span class="s1">__str__</span><span class="s2">(</span><span class="s1">self</span><span class="s2">):</span>
+        <span class="s4">&quot;&quot;&quot;后台/admin显示用户名，而非默认的User object&quot;&quot;&quot;</span>
+        <span class="s0">return </span><span class="s1">self</span><span class="s2">.</span><span class="s1">username</span>
+
+<span class="s3"># 可选：用户登录日志模型（记录登录行为，便于排查问题）</span>
+<span class="s0">class </span><span class="s1">UserLoginLog</span><span class="s2">(</span><span class="s1">models</span><span class="s2">.</span><span class="s1">Model</span><span class="s2">):</span>
+    <span class="s4">&quot;&quot;&quot;用户登录日志，用于记录登录行为、排查登录问题&quot;&quot;&quot;</span>
+    <span class="s1">user </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">ForeignKey</span><span class="s2">(</span>
+        <span class="s1">User</span><span class="s2">,</span>
+        <span class="s1">on_delete</span><span class="s2">=</span><span class="s1">models</span><span class="s2">.</span><span class="s1">CASCADE</span><span class="s2">,</span>
+        <span class="s1">related_name</span><span class="s2">=</span><span class="s6">&quot;login_logs&quot;</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;关联用户&quot;</span>
+    <span class="s2">)</span>
+    <span class="s1">login_time </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">DateTimeField</span><span class="s2">(</span><span class="s1">auto_now_add</span><span class="s2">=</span><span class="s0">True</span><span class="s2">, </span><span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;登录时间&quot;</span><span class="s2">)</span>
+    <span class="s1">login_ip </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">CharField</span><span class="s2">(</span><span class="s1">max_length</span><span class="s2">=</span><span class="s5">50</span><span class="s2">, </span><span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;登录IP&quot;</span><span class="s2">)</span>
+    <span class="s1">login_device </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">CharField</span><span class="s2">(</span>
+        <span class="s1">max_length</span><span class="s2">=</span><span class="s5">100</span><span class="s2">,</span>
+        <span class="s1">blank</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">null</span><span class="s2">=</span><span class="s0">True</span><span class="s2">,</span>
+        <span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;登录设备&quot;</span>
+    <span class="s2">)  </span><span class="s3"># 比如：Chrome/Windows 10、iPhone/iOS 17</span>
+    <span class="s1">login_status </span><span class="s2">= </span><span class="s1">models</span><span class="s2">.</span><span class="s1">BooleanField</span><span class="s2">(</span><span class="s1">default</span><span class="s2">=</span><span class="s0">True</span><span class="s2">, </span><span class="s1">verbose_name</span><span class="s2">=</span><span class="s6">&quot;登录状态&quot;</span><span class="s2">)  </span><span class="s3"># True=成功，False=失败</span>
+
+    <span class="s0">class </span><span class="s1">Meta</span><span class="s2">:</span>
+        <span class="s1">db_table </span><span class="s2">= </span><span class="s6">&quot;user_login_log&quot;</span>
+        <span class="s1">verbose_name </span><span class="s2">= </span><span class="s6">&quot;用户登录日志&quot;</span>
+        <span class="s1">verbose_name_plural </span><span class="s2">= </span><span class="s6">&quot;用户登录日志&quot;</span>
+        <span class="s1">ordering </span><span class="s2">= [</span><span class="s6">&quot;-login_time&quot;</span><span class="s2">]</span>
+
+    <span class="s0">def </span><span class="s1">__str__</span><span class="s2">(</span><span class="s1">self</span><span class="s2">):</span>
+        <span class="s0">return </span><span class="s6">f&quot;</span><span class="s0">{</span><span class="s1">self</span><span class="s2">.</span><span class="s1">user</span><span class="s2">.</span><span class="s1">username</span><span class="s0">} </span><span class="s6">- </span><span class="s0">{</span><span class="s1">self</span><span class="s2">.</span><span class="s1">login_time</span><span class="s2">.</span><span class="s1">strftime</span><span class="s2">(</span><span class="s6">'%Y-%m-%d %H:%M:%S'</span><span class="s2">)</span><span class="s0">}</span><span class="s6">&quot;</span></pre>
+</body>
+</html>
