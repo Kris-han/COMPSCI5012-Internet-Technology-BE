@@ -27,6 +27,7 @@ class Task(models.Model):
         MEDIUM = 2, 'Medium'
         HIGH = 3, 'High'
 
+    uid = models.CharField(max_length=100)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True) 
     
