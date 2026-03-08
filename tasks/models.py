@@ -41,5 +41,8 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True)
 
+    start_time_ts = models.BigIntegerField() # task start time timestamp
+    end_time_ts = models.BigIntegerField() # task end time timestamp
+
     def __str__(self):
         return self.title

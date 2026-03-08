@@ -1,0 +1,8 @@
+from django.urls import path
+from .views import dashboard_list, due_list
+
+urlpatterns = [
+    path('dashboard_list/', dashboard_list),
+    path('due_list/', due_list),
+
+]
