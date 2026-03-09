@@ -27,6 +27,7 @@ class Task(models.Model):
         MEDIUM = 2, 'Medium'
         HIGH = 3, 'High'
 
+    uid = models.CharField(max_length=100)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True) 
     
@@ -40,6 +41,9 @@ class Task(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True)
+
+    start_time_ts = models.BigIntegerField() # task start time timestamp
+    end_time_ts = models.BigIntegerField() # task end time timestamp
 
     def __str__(self):
         return self.title
