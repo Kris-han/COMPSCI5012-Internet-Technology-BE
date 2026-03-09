@@ -132,5 +132,28 @@ def task_detail(request, task_id):
         task.delete()
         return response_success({"deleted": True})
     
-
+@csrf_exempt
+@require_http_methods(["GET"])
+def task_list(request):
+    filter_date = request.GET.get('date')
+    tasks = Task.objects.all().order_by('-created_at')
+   
+    if filter_date == 'today':
+        today = datetime.date.today()
+        tasks = tasks.filter(due_date__date=today)
+    elif filter_date == 'completed':
+        tasks = tasks.filter(status=3)
+    
+    data = []
+    for task in tasks:
+        data.append({
+            'id': task.id,
+            'title': task.title,
+            'description': task.description,
+            'status': task.status,
+            'priority': task.priority,
+            'due_date': task.due_date.isoformat() if task.due_date else None,
+            'created_at': task.created_at.isoformat(),
+        })
+    return response_success(data)
 
