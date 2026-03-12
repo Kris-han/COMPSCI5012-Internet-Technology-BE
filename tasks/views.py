@@ -48,7 +48,10 @@ def add_task(request):
             owner = User.objects.first()
             if not owner:
                 return response_fail("No user found. Please create a user first.")
-        due_date_ts = int(due_date.timestamp())
+        if due_date:
+            due_date_ts = int(due_date.timestamp())  
+        else: 
+            due_date_ts = 0
         current_time_ts = get_current_time_ts()
         task = Task.objects.create(
             title=title,
@@ -59,8 +62,6 @@ def add_task(request):
             project_id=project_id,
             executor_id=executor_id,
             owner=owner,
-            end_time_ts=due_date_ts,
-            start_time_ts=current_time_ts,
         )
         
         return response_success({"id": task.id, "title": task.title, "msg": "Created successfully"})
@@ -73,69 +74,87 @@ def add_task(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET", "PUT", "DELETE"])
-def task_detail(request, task_id):
-    """
-    GET    -> retrieve
-    PUT    -> update
-    DELETE -> delete
-    """
-
+@require_http_methods(["GET"])
+def get_task(request, task_id):
     try:
         task = Task.objects.get(id=task_id)
     except Task.DoesNotExist as e:
-        return response_fail(e)
+        return response_fail(str(e))
 
-    # GET
-    if request.method == "GET":
-        return response_success({
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "status": task.status,
-            "priority": task.priority,
-            "due_date": task.due_date,
-            "owner": task.owner.username,
-            "project_id": task.project_id,
-            "executor_id": task.executor_id,
-        })
+    return response_success({
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "status": task.status,
+        "priority": task.priority,
+        "due_date": task.due_date.isoformat() if task.due_date else None,
+        "owner": task.owner.username,
+        "project_id": task.project_id,
+        "executor_id": task.executor_id,
+    })
 
-    # PUT
-    if request.method == "PUT":
-        try:
-            body = json.loads(request.body)
 
-            task.title = body.get("title", task.title)
-            task.description = body.get("description", task.description)
-            task.status = body.get("status", task.status)
-            task.priority = body.get("priority", task.priority)
-            if "project_id" in body:
-                task.project_id = body.get("project_id")
-            if "executor_id" in body:
-                task.executor_id = body.get("executor_id")
-            if "due_date" in body:
+@csrf_exempt
+@require_http_methods(["PUT"])
+def put_task(request, task_id):
+    try:
+        task = Task.objects.get(id=task_id)
+    except Task.DoesNotExist as e:
+        return response_fail(str(e))
+
+    try:
+        body = json.loads(request.body)
+
+        task.title = body.get("title", task.title)
+        task.description = body.get("description", task.description)
+        task.status = body.get("status", task.status)
+        task.priority = body.get("priority", task.priority)
+        if "project_id" in body:
+            task.project_id = body.get("project_id")
+        if "executor_id" in body:
+            task.executor_id = body.get("executor_id")
+        if "due_date" in body:
+            due_date_val = body.get("due_date")
+            if due_date_val is None:
+                task.due_date = None
+            else:
                 try:
-                    task.due_date = datetime.datetime.fromisoformat(body.get("due_date").replace("Z", "+00:00"))
-                except:
+                    task.due_date = datetime.datetime.fromisoformat(due_date_val.replace("Z", "+00:00"))
+                except ValueError:
                     pass
-            
-            task.save()
-            return response_success({
-                "id": task.id, 
-                "title": task.title, 
-                "msg": "Updated Successfully"
-            })
 
-        except json.JSONDecodeError as e:
-            return response_fail(e.msg)
-        except Exception as e:
-            return response_fail(str(e))
+        task.save()
+        return response_success({"id": task.id, "title": task.title, "msg": "Updated successfully"})
 
-    # DELETE
-    if request.method == "DELETE":
-        task.delete()
-        return response_success({"deleted": True})
-    
+    except json.JSONDecodeError:
+        return response_fail("Invalid JSON")
+    except Exception as e:
+        return response_fail(str(e))
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_task(request, task_id):
+    try:
+        task = Task.objects.get(id=task_id)
+    except Task.DoesNotExist as e:
+        return response_fail(str(e))
+
+    task.delete()
+    return response_success({"deleted": True})
+
+
+@csrf_exempt
+@require_http_methods(["GET", "PUT", "DELETE"])
+def task_detail(request, task_id):
+    if request.method == "GET":
+        return get_task(request, task_id)
+    elif request.method == "PUT":
+        return put_task(request, task_id)
+    elif request.method == "DELETE":
+        return delete_task(request, task_id)
+
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def task_list(request):
@@ -158,6 +177,8 @@ def task_list(request):
             'priority': task.priority,
             'due_date': task.due_date.isoformat() if task.due_date else None,
             'created_at': task.created_at.isoformat(),
+            'owner': task.owner.username,
+            'executor_id': task.executor_id,
         })
     return response_success(data)
 
