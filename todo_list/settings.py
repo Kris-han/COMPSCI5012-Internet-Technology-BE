@@ -29,6 +29,8 @@ ALLOWED_HOSTS = []
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+from .database import DATABASES
+
 
 # Application definition
 
@@ -74,24 +76,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'todo_list.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "todo_list",
-        "USER": "developuser",
-        "PASSWORD": "password123!@#$",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
-        "OPTIONS": {
-            "charset": "utf8mb4",
-        },
-    }
-}
 
 
 # Password validation
