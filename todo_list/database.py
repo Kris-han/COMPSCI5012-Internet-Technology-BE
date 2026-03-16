@@ -3,8 +3,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DJANGO_ENV = os.getenv("DJANGO_ENV", "local").lower()
 load_dotenv(BASE_DIR / ".env")
+DJANGO_ENV = os.getenv("DJANGO_ENV", "local").lower()
 
 
 def local_db_config():
