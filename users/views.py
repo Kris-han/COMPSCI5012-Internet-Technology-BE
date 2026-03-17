@@ -1,6 +1,5 @@
 import json
 import re
-
 from utils.response import response_fail, response_success
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -128,5 +127,43 @@ def logout(request):
         return response_fail("Token is required", 401)
 
     UserToken.objects.filter(token=token).delete()
+    return response_success()
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_password(request):
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return response_fail("Invalid JSON body")
+
+    email = str(body.get("email", "")).strip().lower()
+    new_password = str(body.get("new_password", "")).strip()
+    confirm_password = str(body.get("confirm_password", "")).strip()
+
+    if not email:
+        return response_fail("Email is required")
+
+    if not new_password:
+        return response_fail("New password is required")
+
+    if len(new_password) < 6:
+        return response_fail("Password must be at least 6 characters")
+
+    if new_password != confirm_password:
+        return response_fail("The two passwords do not match")
+
+    try:
+        user = User.objects.get(email=email)
+        if not user:
+            return response_fail("User does not exist.", 401)
+    except User.DoesNotExist:
+        return response_fail("User does not exist", code=404)
+
+    user.password_hash = make_password(new_password)
+    user.save(update_fields=["password_hash"])
+
     return response_success()
 
