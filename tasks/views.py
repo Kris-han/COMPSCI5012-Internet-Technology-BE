@@ -215,3 +215,81 @@ def task_list(request):
         })
     return response_success(data)
 
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def search_task(request):
+    try:
+        q = request.GET.get("search", "").strip()
+        uid = request.GET.get("uid")
+        status = request.GET.get("status")
+        priority = request.GET.get("priority")
+        project_id = request.GET.get("project_id")
+
+        page = int(request.GET.get("page", 1))
+        page_size = int(request.GET.get("page_size", 10))
+
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 10
+
+        queryset = Task.objects.filter(is_deleted=0)
+
+        if uid not in [None, ""]:
+            queryset = queryset.filter(uid=uid)
+
+        if status not in [None, ""]:
+            queryset = queryset.filter(status=status)
+
+        if priority not in [None, ""]:
+            queryset = queryset.filter(priority=priority)
+
+        if project_id not in [None, ""]:
+            queryset = queryset.filter(project_id=project_id)
+
+        if q:
+            queryset = queryset.filter(
+                Q(title__icontains=q) | Q(description__icontains=q)
+            )
+
+        total = queryset.count()
+        total_pages = math.ceil(total / page_size) if total > 0 else 1
+
+        start = (page - 1) * page_size
+        end = start + page_size
+        tasks = queryset[start:end]
+
+        data = []
+        for task in tasks:
+            data.append({
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "uid": task.uid,
+                "status": task.status,
+                "priority": task.priority,
+                "start_time_ts": task.start_time_ts,
+                "end_time_ts": task.end_time_ts,
+                "completed_at_ts": task.completed_at_ts,
+                "project_id": task.project_id,
+                "created_at": task.created_at.isoformat() if task.created_at else None,
+                "updated_at": task.updated_at.isoformat() if task.updated_at else None,
+                "is_deleted": task.is_deleted,
+            })
+
+        return response_success({
+            "list": data,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": total_pages,
+            }
+        })
+
+    except ValueError:
+        return response_fail("Invalid page or page_size")
+    except Exception as e:
+        return response_fail(str(e))
+
