@@ -14,32 +14,46 @@ class Project(models.Model):
 
 class Task(models.Model):
     class Meta:
-        db_table = "task"  
+        db_table = "task"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["uid", "status"]),
+            models.Index(fields=["uid", "start_time_ts"]),
+            models.Index(fields=["uid", "end_time_ts"]),
+            models.Index(fields=["uid", "completed_at_ts"]),
+        ]
 
     class Status(models.IntegerChoices):
-        TODO = 1, 'To Do'
-        IN_PROGRESS = 2, 'In Progress'
-        COMPLETED = 3, 'Completed'
-        POSTPONED = 4, 'Postponed'
+        TODO = 1, "To Do"
+        IN_PROGRESS = 2, "In Progress"
+        COMPLETED = 3, "Completed"
+        POSTPONED = 4, "Postponed"
 
     class Priority(models.IntegerChoices):
-        LOW = 1, 'Low'
-        MEDIUM = 2, 'Medium'
-        HIGH = 3, 'High'
+        LOW = 1, "Low"
+        MEDIUM = 2, "Medium"
+        HIGH = 3, "High"
 
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True) 
-    
+    description = models.TextField(blank=True, null=True)
+    uid = models.BigIntegerField(db_index=True)
+    status = models.IntegerField(
+        choices=Status.choices,
+        default=Status.TODO
+    )
+    priority = models.IntegerField(
+        choices=Priority.choices,
+        default=Priority.MEDIUM
+    )
 
-    status = models.IntegerField(choices=Status.choices, default=Status.TODO)
-    priority = models.IntegerField(choices=Priority.choices, default=Priority.MEDIUM)
-    due_date = models.DateTimeField(null=True, blank=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_tasks')
-    executor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='executed_tasks', null=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True)
+    start_time_ts = models.BigIntegerField()
+    end_time_ts = models.BigIntegerField()
+    completed_at_ts = models.BigIntegerField(null=True, blank=True)
+    project_id = models.BigIntegerField(null=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True) 
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_deleted = models.IntegerField(default=0)
 
     def __str__(self):
         return self.title
