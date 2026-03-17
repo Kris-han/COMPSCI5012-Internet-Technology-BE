@@ -2,7 +2,8 @@ import json
 import math
 import time
 import calendar
-from datetime import datetime
+import datetime
+from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from utils.time import get_current_time_ts,get_month_ts
 from utils.response import response_success, response_fail
@@ -166,7 +167,7 @@ def task_list(request):
 def format_ts(ts):
     if not ts:
         return ""
-    return datetime.fromtimestamp(ts).strftime("%d-%m-%Y")
+    return datetime.datetime.fromtimestamp(ts).strftime("%d-%m-%Y")
 
 
 def get_status_text(status):
@@ -187,3 +188,135 @@ def get_priority_text(priority):
     }
     return priority_map.get(priority, "")
 
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def finished_list(request):
+    try:
+        body = json.loads(request.body or "{}")
+    except Exception:
+        return response_fail("Invalid JSON body")
+
+    keyword = str(body.get("keyword", "")).strip()
+    priority = body.get("priority", "all")
+    sort = str(body.get("sort", "recent")).strip()
+
+    uid = body.get("uid")
+
+    tasks = Task.objects.filter(uid=uid, status=3)
+
+    if keyword:
+        tasks = tasks.filter(
+            Q(title__icontains=keyword) |
+            Q(description__icontains=keyword)
+        )
+
+    if priority not in [None, "", "all"]:
+        try:
+            tasks = tasks.filter(priority=int(priority))
+        except ValueError:
+            return response_fail("Invalid priority")
+
+    if sort == "recent":
+        tasks = tasks.order_by("-completed_at_ts", "-id")
+    elif sort == "oldest":
+        tasks = tasks.order_by("completed_at_ts", "-id")
+    elif sort == "priority_desc":
+        tasks = tasks.order_by("-priority", "-completed_at_ts", "-id")
+    elif sort == "priority_asc":
+        tasks = tasks.order_by("priority", "-completed_at_ts", "-id")
+    else:
+        tasks = tasks.order_by("-completed_at_ts", "-id")
+
+    task_list = [_serialize_task(task) for task in tasks]
+
+    week_start = datetime.datetime.now()
+    week_day = week_start.weekday()
+    week_start = week_start - datetime.timedelta(days=week_day)
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start_ts = int(week_start.timestamp())
+
+    finished_this_week = sum(
+        1 for task in task_list
+        if (task.get("completed_at_ts") or 0) >= week_start_ts
+    )
+
+    total_task_count = Task.objects.filter(uid=uid).count()
+    total_finished_count = len(task_list)
+    completion_rate = 0
+    if total_task_count > 0:
+        completion_rate = round(total_finished_count * 100 / total_task_count)
+
+    return response_success({
+        "list": task_list,
+        "summary": {
+            "total_finished": total_finished_count,
+            "finished_this_week": finished_this_week,
+            "completion_rate": completion_rate
+        }
+    })
+
+def _serialize_task(task):
+    return {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "status": task.status,
+        "priority": task.priority,
+        "start_time_ts": task.start_time_ts,
+        "end_time_ts": task.end_time_ts,
+        "completed_at_ts": task.completed_at_ts,
+        "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S") if task.created_at else None,
+        "updated_at": task.updated_at.strftime("%Y-%m-%d %H:%M:%S") if task.updated_at else None,
+    }
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def finished_reopen(request):
+    try:
+        body = json.loads(request.body or "{}")
+    except Exception:
+        return response_fail("Invalid JSON body")
+
+    task_id = body.get("id")
+    if not task_id:
+        return response_fail("Task id is required")
+
+    uid = body.get("uid")
+
+    try:
+        task = Task.objects.get(id=task_id, uid=uid, status=3)
+    except Task.DoesNotExist:
+        return response_fail("Finished task not found")
+
+    task.status = 1
+    task.completed_at_ts = 0
+    task.save()
+
+    return response_success({"id": task.id}, "Task reopened successfully")
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def finished_delete(request):
+
+    try:
+        body = json.loads(request.body or "{}")
+    except Exception:
+        return response_fail("Invalid JSON body")
+
+    task_id = body.get("id")
+    if not task_id:
+        return response_fail("Task id is required")
+
+    uid = body.get("uid")
+
+    try:
+        task = Task.objects.get(id=task_id, uid=uid, status=3)
+    except Task.DoesNotExist:
+        return response_fail("Finished task not found")
+
+    task.is_deleted = 1
+    task.save()
+
+    return response_success({"id": task_id}, "Task deleted successfully")
