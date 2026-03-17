@@ -320,3 +320,32 @@ def finished_delete(request):
     task.save()
 
     return response_success({"id": task_id}, "Task deleted successfully")
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def today_count(request):
+    try:
+        body = json.loads(request.body or "{}")
+    except Exception:
+        return response_fail("Invalid JSON body")
+
+    uid = body.get("uid")
+
+    now = datetime.datetime.now()
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    day_start_ts = int(day_start.timestamp())
+    day_end_ts = int(day_end.timestamp())
+
+    # 任务时间区间覆盖今天，就算 today task
+    today_count_value = Task.objects.filter(
+        uid=uid,
+        start_time_ts__lte=day_end_ts,
+        end_time_ts__gte=day_start_ts
+    ).exclude(status=3).count()
+
+    return response_success({
+        "today_count": today_count_value
+    })
