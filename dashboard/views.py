@@ -4,6 +4,7 @@ import time
 import calendar
 import datetime
 from django.db.models import Q
+from utils.auth_utils import get_request_user
 from django.views.decorators.csrf import csrf_exempt
 from utils.time import get_current_time_ts,get_month_ts
 from utils.response import response_success, response_fail
@@ -17,7 +18,10 @@ from tasks.models import Task
 @require_http_methods(["GET"])
 def dashboard_list(request):
     try:
-        uid = request.GET.get("uid", "")
+        user = get_request_user(request)
+        if not user:
+            return response_fail("Unauthorized", 401)
+        uid = user.id
         if not uid:
             return response_fail("parameter is wrong!")
 
@@ -90,9 +94,12 @@ def dashboard_list(request):
 @require_http_methods(["POST"])
 def task_list(request):
     try:
+        user = get_request_user(request)
+        if not user:
+            return response_fail("Unauthorized", 401)
+        uid = user.id
         para = json.loads(request.body or "{}")
         data = para.get("params", {})
-        uid = data.get("uid", "")
         if not uid:
             return response_fail("parameter is wrong!")
 
@@ -192,6 +199,10 @@ def get_priority_text(priority):
 @csrf_exempt
 @require_http_methods(["POST"])
 def finished_list(request):
+    user = get_request_user(request)
+    if not user:
+        return response_fail("Unauthorized", 401)
+    uid = user.id
     try:
         body = json.loads(request.body or "{}")
     except Exception:
@@ -200,8 +211,6 @@ def finished_list(request):
     keyword = str(body.get("keyword", "")).strip()
     priority = body.get("priority", "all")
     sort = str(body.get("sort", "recent")).strip()
-
-    uid = body.get("uid")
 
     tasks = Task.objects.filter(uid=uid, status=3)
 
@@ -273,6 +282,10 @@ def _serialize_task(task):
 @csrf_exempt
 @require_http_methods(["POST"])
 def finished_reopen(request):
+    user = get_request_user(request)
+    if not user:
+        return response_fail("Unauthorized", 401)
+    uid = user.id
     try:
         body = json.loads(request.body or "{}")
     except Exception:
@@ -281,8 +294,6 @@ def finished_reopen(request):
     task_id = body.get("id")
     if not task_id:
         return response_fail("Task id is required")
-
-    uid = body.get("uid")
 
     try:
         task = Task.objects.get(id=task_id, uid=uid, status=3)
@@ -300,6 +311,10 @@ def finished_reopen(request):
 @require_http_methods(["POST"])
 def finished_delete(request):
 
+    user = get_request_user(request)
+    if not user:
+        return response_fail("Unauthorized", 401)
+    uid = user.id
     try:
         body = json.loads(request.body or "{}")
     except Exception:
@@ -308,8 +323,6 @@ def finished_delete(request):
     task_id = body.get("id")
     if not task_id:
         return response_fail("Task id is required")
-
-    uid = body.get("uid")
 
     try:
         task = Task.objects.get(id=task_id, uid=uid, status=3)
@@ -325,12 +338,15 @@ def finished_delete(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def today_count(request):
+
+    user = get_request_user(request)
+    if not user:
+        return response_fail("Unauthorized", 401)
+    uid = user.id
     try:
         body = json.loads(request.body or "{}")
     except Exception:
         return response_fail("Invalid JSON body")
-
-    uid = body.get("uid")
 
     now = datetime.datetime.now()
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)

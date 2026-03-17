@@ -1,8 +1,7 @@
 import json
 import datetime
-from tasks.models import Task, Project
-from utils.time import get_current_time_ts
-from django.contrib.auth.models import User
+from tasks.models import Task
+from utils.auth_utils import get_request_user
 from django.views.decorators.csrf import csrf_exempt
 from utils.response import response_success,response_fail
 from django.views.decorators.http import require_http_methods
@@ -21,8 +20,11 @@ def hello(request):
 @require_http_methods(["POST"])
 def add_task(request):
     try:
+        user = get_request_user(request)
+        if not user:
+            return response_fail("Unauthorized", 401)
         body = json.loads(request.body or "{}")
-        uid = body.get("uid", "")
+        uid = user.id
         title = str(body.get("title", "")).strip()
         description = str(body.get("description", "")).strip()
         priority = int(body.get("priority", Task.Priority.MEDIUM))
@@ -220,8 +222,11 @@ def task_list(request):
 @require_http_methods(["GET"])
 def search_task(request):
     try:
+        user = get_request_user(request)
+        if not user:
+            return response_fail("Unauthorized", 401)
+        uid = user.id
         q = request.GET.get("search", "").strip()
-        uid = request.GET.get("uid")
         status = request.GET.get("status")
         priority = request.GET.get("priority")
         project_id = request.GET.get("project_id")
