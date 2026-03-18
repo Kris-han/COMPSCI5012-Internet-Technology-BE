@@ -1,6 +1,7 @@
 import json
 import math
 import time
+import random
 import requests
 import datetime
 from django.db.models import Q
@@ -369,50 +370,50 @@ def today_count(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def get_daily_quote():
+def get_daily_quote(request):
     """
     Get a daily inspirational English quote
     """
     try:
-        url = "https://zenquotes.io/api/today"
+        url = "https://type.fit/api/quotes"
         resp = requests.get(url, timeout=8)
         resp.raise_for_status()
         data = resp.json()
 
         if isinstance(data, list) and len(data) > 0:
-            item = data[0]
+            today = datetime.date.today().toordinal()
+            item = data[today % len(data)]
             res = {
-                    "quote": item.get("q", ""),
-                    "author": item.get("a", "Unknown"),
-                }
+                "quote": item.get("text", ""),
+                "author": item.get("author") or "Unknown",
+            }
             return response_success(res)
 
         return response_fail("Invalid quote response")
-
     except Exception as e:
         return response_fail(str(e))
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def get_random_quote():
+def get_random_quote(request):
     """
     Randomly select an English inspirational quote
     """
     try:
-        url = "https://zenquotes.io/api/random"
+        url = "https://type.fit/api/quotes"
         resp = requests.get(url, timeout=8)
         resp.raise_for_status()
         data = resp.json()
 
         if isinstance(data, list) and len(data) > 0:
-            item = data[0]
+            item = random.choice(data)
             res = {
-                "quote": item.get("q", ""),
-                "author": item.get("a", "Unknown"),
+                "quote": item.get("text", ""),
+                "author": item.get("author") or "Unknown",
             }
             return response_success(res)
-        return response_fail("Invalid quote response")
 
+        return response_fail("Invalid quote response")
     except Exception as e:
         return response_fail(str(e))

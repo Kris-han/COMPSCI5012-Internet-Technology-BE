@@ -10,19 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='task',
-            name='end_time_ts',
-            field=models.BigIntegerField(default=0),
-        ),
-        migrations.AddField(
-            model_name='task',
-            name='start_time_ts',
-            field=models.BigIntegerField(default=0),
-        ),
-        migrations.AddField(
-            model_name='task',
-            name='uid',
-            field=models.CharField(default='', max_length=100),
-        ),
     ]
