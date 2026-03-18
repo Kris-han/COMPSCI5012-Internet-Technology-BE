@@ -1,6 +1,8 @@
 import json
+import math
 import datetime
 from tasks.models import Task
+from django.db.models import Q
 from utils.auth_utils import get_request_user
 from django.views.decorators.csrf import csrf_exempt
 from utils.response import response_success,response_fail
@@ -28,7 +30,7 @@ def add_task(request):
         title = str(body.get("title", "")).strip()
         description = str(body.get("description", "")).strip()
         priority = int(body.get("priority", Task.Priority.MEDIUM))
-        project_id = body.get("project_id", None)
+        project_name = body.get("project_name", None)
 
         start_time_ts = body.get("start_time_ts")
         end_time_ts = body.get("end_time_ts")
@@ -52,13 +54,13 @@ def add_task(request):
         except (TypeError, ValueError):
             return response_fail("uid/start_time_ts/end_time_ts format is invalid")
 
-        if project_id not in ["", None]:
+        if project_name not in ["", None]:
             try:
-                project_id = int(project_id)
+                project_name = str(project_name)
             except (TypeError, ValueError):
-                return response_fail("project_id format is invalid")
+                return response_fail("project_name format is invalid")
         else:
-            project_id = None
+            project_name = None
 
         if end_time_ts <= start_time_ts:
             return response_fail("end_time_ts must be greater than start_time_ts")
@@ -79,7 +81,7 @@ def add_task(request):
             start_time_ts=start_time_ts,
             end_time_ts=end_time_ts,
             completed_at_ts=None,
-            project_id=project_id,
+            project_name=project_name,
         )
 
         return response_success({
@@ -113,7 +115,7 @@ def get_task(request, task_id):
         "start_time_ts": task.start_time_ts,
         "end_time_ts": task.end_time_ts,
         "completed_at_ts": task.completed_at_ts,
-        "project_id": task.project_id,
+        "project_name": task.project_name,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
         "is_deleted": task.is_deleted,
@@ -150,8 +152,8 @@ def put_task(request, task_id):
             task.end_time_ts = body.get("end_time_ts")
         if "completed_at_ts" in body:
             task.completed_at_ts = body.get("completed_at_ts")
-        if "project_id" in body:
-            task.project_id = body.get("project_id")
+        if "project_name" in body:
+            task.project_name = body.get("project_name")
         task.save()
 
         return response_success({
@@ -229,7 +231,7 @@ def search_task(request):
         q = request.GET.get("search", "").strip()
         status = request.GET.get("status")
         priority = request.GET.get("priority")
-        project_id = request.GET.get("project_id")
+        project_name = request.GET.get("project_name")
 
         page = int(request.GET.get("page", 1))
         page_size = int(request.GET.get("page_size", 10))
@@ -250,8 +252,8 @@ def search_task(request):
         if priority not in [None, ""]:
             queryset = queryset.filter(priority=priority)
 
-        if project_id not in [None, ""]:
-            queryset = queryset.filter(project_id=project_id)
+        if project_name not in [None, ""]:
+            queryset = queryset.filter(project_name=project_name)
 
         if q:
             queryset = queryset.filter(
@@ -277,7 +279,7 @@ def search_task(request):
                 "start_time_ts": task.start_time_ts,
                 "end_time_ts": task.end_time_ts,
                 "completed_at_ts": task.completed_at_ts,
-                "project_id": task.project_id,
+                "project_name": task.project_name,
                 "created_at": task.created_at.isoformat() if task.created_at else None,
                 "updated_at": task.updated_at.isoformat() if task.updated_at else None,
                 "is_deleted": task.is_deleted,

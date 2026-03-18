@@ -107,7 +107,7 @@ def task_list(request):
         page = int(data.get("page", 1))
         keyword = str(data.get("keyword", "")).strip()
         status = data.get("status", "")
-        project_id = data.get("project_id", "")
+        project_name = data.get("project_name", "")
 
         if page < 1:
             page = 1
@@ -129,8 +129,8 @@ def task_list(request):
         if status not in ["", None]:
             queryset = queryset.filter(status=int(status))
 
-        if project_id not in ["", None]:
-            queryset = queryset.filter(project_id=int(project_id))
+        if project_name not in ["", None]:
+            queryset = queryset.filter(project_name=int(project_name))
 
         queryset = queryset.order_by("end_time_ts", "-id")
 
@@ -144,8 +144,8 @@ def task_list(request):
                 "uid": task.uid,
                 "title": task.title,
                 "description": task.description,
-                "project_id": task.project_id,
-                "project_name": f"Project {task.project_id}" if task.project_id else "project",
+                "project_name": task.project_name,
+                # "project_name": f"Project {task.project_id}" if task.project_id else "project",
                 "status": task.status,
                 "status_text": get_status_text(task.status),
                 "priority": task.priority,
