@@ -1,7 +1,7 @@
 import json
 import math
 import time
-import calendar
+import requests
 import datetime
 from django.db.models import Q
 from utils.auth_utils import get_request_user
@@ -365,3 +365,54 @@ def today_count(request):
     return response_success({
         "today_count": today_count_value
     })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_daily_quote():
+    """
+    Get a daily inspirational English quote
+    """
+    try:
+        url = "https://zenquotes.io/api/today"
+        resp = requests.get(url, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if isinstance(data, list) and len(data) > 0:
+            item = data[0]
+            res = {
+                    "quote": item.get("q", ""),
+                    "author": item.get("a", "Unknown"),
+                }
+            return response_success(res)
+
+        return response_fail("Invalid quote response")
+
+    except Exception as e:
+        return response_fail(str(e))
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_random_quote():
+    """
+    Randomly select an English inspirational quote
+    """
+    try:
+        url = "https://zenquotes.io/api/random"
+        resp = requests.get(url, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if isinstance(data, list) and len(data) > 0:
+            item = data[0]
+            res = {
+                "quote": item.get("q", ""),
+                "author": item.get("a", "Unknown"),
+            }
+            return response_success(res)
+        return response_fail("Invalid quote response")
+
+    except Exception as e:
+        return response_fail(str(e))
